@@ -1,0 +1,148 @@
+apiVersion: v1
+data:
+  nginx-analytics.json: |
+    {
+      "annotations": {
+        "list": []
+      },
+      "editable": true,
+      "graphTooltip": 0,
+      "panels": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "analytics-postgres"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 0
+          },
+          "id": 1,
+          "title": "Requests by HTTP Status",
+          "type": "timeseries",
+          "targets": [
+            {
+              "format": "time_series",
+              "rawQuery": true,
+              "rawSql": "SELECT event_date + (hour * INTERVAL '1 hour') AS time, status::text AS metric, SUM(request_count) AS requests FROM nginx_hourly_metrics GROUP BY event_date, hour, status ORDER BY time;",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "analytics-postgres"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 0
+          },
+          "id": 2,
+          "title": "Total Requests",
+          "type": "timeseries",
+          "targets": [
+            {
+              "format": "time_series",
+              "rawQuery": true,
+              "rawSql": "SELECT event_date + (hour * INTERVAL '1 hour') AS time, SUM(request_count) AS requests FROM nginx_hourly_metrics GROUP BY event_date, hour ORDER BY time;",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "analytics-postgres"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ms"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 8
+          },
+          "id": 3,
+          "title": "Average Request Time",
+          "type": "timeseries",
+          "targets": [
+            {
+              "format": "time_series",
+              "rawQuery": true,
+              "rawSql": "SELECT event_date + (hour * INTERVAL '1 hour') AS time, AVG(avg_request_time) AS avg_request_time FROM nginx_hourly_metrics GROUP BY event_date, hour ORDER BY time;",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "analytics-postgres"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 8
+          },
+          "id": 4,
+          "title": "5xx Errors",
+          "type": "timeseries",
+          "targets": [
+            {
+              "format": "time_series",
+              "rawQuery": true,
+              "rawSql": "SELECT event_date + (hour * INTERVAL '1 hour') AS time, SUM(request_count) AS errors FROM nginx_hourly_metrics WHERE status >= 500 GROUP BY event_date, hour ORDER BY time;",
+              "refId": "A"
+            }
+          ]
+        }
+      ],
+      "schemaVersion": 39,
+      "style": "dark",
+      "tags": [
+        "nginx",
+        "data-platform"
+      ],
+      "templating": {
+        "list": []
+      },
+      "time": {
+        "from": "now-24h",
+        "to": "now"
+      },
+      "title": "Nginx Analytics",
+      "uid": "nginx-analytics"
+    }
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: grafana-nginx-dashboard
+  namespace: observability

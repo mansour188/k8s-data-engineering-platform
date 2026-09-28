@@ -1,0 +1,137 @@
+airflowVersion: "3.2.2"
+
+executor: KubernetesExecutor
+
+# ==================================================
+# DAG STORAGE
+# ==================================================
+
+# No PVC
+# No hostPath
+# No GitSync
+#
+# DAGs come from MinIO through S3DagBundle.
+
+dags:
+  persistence:
+    enabled: false
+
+  gitSync:
+    enabled: false
+
+
+# ==================================================
+# AIRFLOW CONFIG
+# ==================================================
+
+config:
+  core:
+    dagbag_import_timeout: 120
+    load_examples: "False"
+
+
+# ==================================================
+# MINIO DAG BUNDLE
+# ==================================================
+
+dagProcessor:
+  dagBundleConfigList:
+    - name: minio-dags
+      classpath: airflow.providers.amazon.aws.bundles.s3.S3DagBundle
+      kwargs:
+        aws_conn_id: minio_dags
+        bucket_name: airflow-dags
+        prefix: dags/
+        refresh_interval: 30
+
+  livenessProbe:
+    initialDelaySeconds: 180
+    periodSeconds: 60
+    timeoutSeconds: 30
+    failureThreshold: 10
+
+extraEnvFrom: |
+  - secretRef:
+      name: airflow-minio-connection
+
+# ==================================================
+# POSTGRESQL
+# ==================================================
+
+postgresql:
+  enabled: false
+
+data:
+  metadataConnection:
+    user: airflow
+    pass: airflow
+    protocol: postgresql
+    host: postgres-airflow
+    port: 5432
+    db: airflow
+    sslmode: disable
+
+
+# ==================================================
+# AIRFLOW SECURITY
+# ==================================================
+
+apiSecretKey: "9UYMxhftaPHTk47E7GY7BWLliJHb52p14xKEuWtL9K0"
+fernetKey: "X6tjm_at-mJiwPnYGPXI8NosLhVUwMQeDo5PGc6xDP8"
+
+
+# ==================================================
+# AIRFLOW API SERVER
+# ==================================================
+
+apiServer:
+  service:
+    type: NodePort
+
+  startupProbe:
+    initialDelaySeconds: 30
+    periodSeconds: 20
+    timeoutSeconds: 10
+    failureThreshold: 20
+
+  readinessProbe:
+    initialDelaySeconds: 60
+    periodSeconds: 20
+    timeoutSeconds: 10
+    failureThreshold: 10
+
+  livenessProbe:
+    initialDelaySeconds: 120
+    periodSeconds: 30
+    timeoutSeconds: 10
+    failureThreshold: 10
+
+
+# ==================================================
+# SCHEDULER
+# ==================================================
+
+scheduler:
+  startupProbe:
+    initialDelaySeconds: 300
+    periodSeconds: 15
+    timeoutSeconds: 80
+    failureThreshold: 10
+
+  livenessProbe:
+    initialDelaySeconds: 180
+    periodSeconds: 60
+    timeoutSeconds: 30
+    failureThreshold: 10
+
+
+# ==================================================
+# TRIGGERER
+# ==================================================
+
+triggerer:
+  livenessProbe:
+    initialDelaySeconds: 180
+    periodSeconds: 60
+    timeoutSeconds: 30
+    failureThreshold: 10

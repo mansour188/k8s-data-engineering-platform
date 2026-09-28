@@ -1,0 +1,54 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+  namespace: data-platform
+data:
+  nginx.conf: |
+    events {}
+
+    http {
+        log_format json_logs escape=json
+        '{'
+            '"timestamp":"$time_iso8601",'
+            '"remote_addr":"$remote_addr",'
+            '"method":"$request_method",'
+            '"uri":"$uri",'
+            '"status":$status,'
+            '"request_time":$request_time,'
+            '"body_bytes_sent":$body_bytes_sent,'
+            '"user_agent":"$http_user_agent"'
+        '}';
+
+        access_log /var/log/nginx/access.log json_logs;
+
+        server {
+            listen 80;
+
+            location / {
+                return 200 'K8s Data Platform NGINX\n';
+                add_header Content-Type text/plain;
+            }
+
+            location /health {
+                access_log off;
+                return 200 'OK\n';
+                add_header Content-Type text/plain;
+            }
+
+            location /api/products {
+                return 200 '{"products":[1,2,3]}';
+                add_header Content-Type application/json;
+            }
+
+            location /api/orders {
+                return 201 '{"order_id":123}';
+                add_header Content-Type application/json;
+            }
+
+            location /api/error {
+                return 500 '{"error":"internal_error"}';
+                add_header Content-Type application/json;
+            }
+        }
+    }

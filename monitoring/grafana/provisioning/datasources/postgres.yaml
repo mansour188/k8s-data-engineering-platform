@@ -1,0 +1,22 @@
+apiVersion: 1
+
+datasources:
+  - name: Analytics PostgreSQL
+    uid: analytics-postgres
+    type: postgres
+    access: proxy
+
+    url: postgres-data.data-platform.svc.cluster.local:5432
+
+    user: ${POSTGRES_USER}
+    secureJsonData:
+      password: ${POSTGRES_PASSWORD}
+
+    jsonData:
+      database: analytics
+      sslmode: disable
+      postgresVersion: 1600
+      timescaledb: false
+
+    isDefault: false
+    editable: false

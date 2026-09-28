@@ -1,0 +1,45 @@
+admin:
+  existingSecret: grafana-admin
+
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+      - name: Analytics PostgreSQL
+        uid: analytics-postgres
+        type: postgres
+        access: proxy
+        url: postgres-data.data-platform.svc.cluster.local:5432
+
+        user: analytics
+
+        secureJsonData:
+          password: analytics123
+
+        jsonData:
+          database: analytics
+          sslmode: disable
+          postgresVersion: 1600
+          timescaledb: false
+
+        isDefault: true
+        editable: false
+
+dashboardProviders:
+  dashboardproviders.yaml:
+    apiVersion: 1
+    providers:
+      - name: Data Platform
+        orgId: 1
+        folder: Data Platform
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards
+
+extraConfigmapMounts:
+  - name: grafana-nginx-dashboard
+    configMap: grafana-nginx-dashboard
+    mountPath: /var/lib/grafana/dashboards
+    readOnly: true

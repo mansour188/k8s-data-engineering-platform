@@ -1,0 +1,46 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluent-bit-config
+  namespace: data-platform
+
+data:
+  fluent-bit.conf: |
+    [SERVICE]
+        Flush        1
+        Log_Level    info
+
+    # Read only NGINX container logs
+    [INPUT]
+        Name              tail
+        Path              /var/log/containers/nginx-*_data-platform_nginx-*.log
+        Parser            cri
+        Tag               nginx.*
+        Mem_Buf_Limit     10MB
+        Skip_Long_Lines   On
+
+    # Parse Kubernetes/CRI metadata and extract the application log
+    [FILTER]
+        Name                kubernetes
+        Match               nginx.*
+        Merge_Log           On
+        Keep_Log            Off
+        K8S-Logging.Parser  On
+
+    # Keep stdout during testing so we can see what Fluent Bit receives
+    [OUTPUT]
+        Name   stdout
+        Match  nginx.*
+
+    # Send NGINX logs to MinIO S3
+    [OUTPUT]
+        Name                s3
+        Match               nginx.*
+        bucket              bronze
+        region              us-east-1
+        endpoint             http://minio.minio.svc.cluster.local:9000
+        total_file_size     5M
+        upload_timeout      1m
+        use_put_object      On
+        s3_key_format       /nginx/date=%Y-%m-%d/hour=%H/$UUID
+        store_dir           /tmp/fluent-bit/s3
